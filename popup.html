@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gmail Scheduler</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Gmail Scheduled Email Sender</h1>
+    
+    <div class="info-box">
+      <p><strong>ℹ️ How it works:</strong> Each email will be scheduled <strong>separately</strong> in its own compose window. After completion, the form will be automatically cleared.</p>
+    </div>
+    
+    <form id="emailForm">
+      <div class="form-group">
+        <label for="emails">Email Addresses (comma-separated):</label>
+        <textarea 
+          id="emails" 
+          name="emails" 
+          rows="3" 
+          placeholder="email1@example.com,email2@example.com" 
+          required
+        ></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="cc">CC (optional):</label>
+        <input 
+          type="text" 
+          id="cc" 
+          name="cc" 
+          placeholder="cc@example.com"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="subject">Subject:</label>
+        <input 
+          type="text" 
+          id="subject" 
+          name="subject" 
+          placeholder="Email Subject" 
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="message">Message:</label>
+        <textarea 
+          id="message" 
+          name="message" 
+          rows="6" 
+          placeholder="Your message here..." 
+          required
+        ></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="plannedDate">Planned Date & Time:</label>
+        <input 
+          type="datetime-local" 
+          id="plannedDate" 
+          name="plannedDate" 
+          required
+        >
+        <small>Format: DD.MM.YYYY, HH:MM (in local time)</small>
+      </div>
+
+      <div class="form-group">
+        <label for="delay">Delay between emails (seconds):</label>
+        <input 
+          type="number" 
+          id="delay" 
+          name="delay" 
+          value="5" 
+          min="1" 
+          max="60"
+        >
+        <small>Time to wait between scheduling each email</small>
+      </div>
+
+      <button type="submit" id="scheduleBtn" class="btn-primary">
+        Schedule Emails
+      </button>
+    </form>
+
+    <div id="status" class="status hidden"></div>
+    <div id="progress" class="progress hidden">
+      <div class="progress-bar">
+        <div id="progressBar" class="progress-fill"></div>
+      </div>
+      <p id="progressText">Scheduling: 0/0</p>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
+
