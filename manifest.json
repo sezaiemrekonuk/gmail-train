@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Gmail Train - Multi-Email Scheduler",
-  "version": "1.4.1",
-  "description": "Schedule and send emails separately and sequentially in Gmail",
+  "version": "1.4.2",
+  "description": "Schedule and send emails separately and sequentially in Gmail with English & Turkish support",
   "permissions": [
     "activeTab",
     "scripting",

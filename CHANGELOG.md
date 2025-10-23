@@ -1,5 +1,32 @@
 # Changelog
 
+## Version 1.4.2 (October 23, 2025)
+
+### 🌍 Language Support
+
+**English Gmail Interface Support**
+- **New**: Full support for English Gmail interface
+- **Bilingual**: Extension now works with both English and Turkish Gmail
+- **Auto-detection**: Automatically detects and works with both languages
+- **No configuration needed**: Works out of the box
+
+**Updated Selectors**:
+- Message body: Now checks for both "Message" and "İleti"
+- Dropdown button: "More send options" and "Diğer gönderme seçenekleri"
+- Schedule send: "Schedule send" and "Gönderme zamanını planla"
+- Pick date/time: "Pick date" and "Tarih ve saat seç"
+- Time input: "Time" and "Zaman"
+- Save button: "Save" / "Schedule send" and "Kaydet"
+- Date picker: Language-agnostic date number matching
+
+**Benefits**:
+- ✅ Works on English Chrome with English Gmail
+- ✅ Works on Turkish Chrome with Turkish Gmail
+- ✅ Seamless experience regardless of language
+- ✅ No need to switch languages or configure anything
+
+---
+
 ## Version 1.4.1 (October 23, 2025)
 
 ### 🐛 Bug Fixes

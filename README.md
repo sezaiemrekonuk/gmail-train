@@ -15,6 +15,7 @@ A powerful Chrome extension that allows you to schedule and send emails separate
 - 🔔 Desktop notifications on completion
 - 🎯 Background service worker for multitasking
 - 🛡️ Tab close protection during scheduling
+- 🌍 **Bilingual support** - Works with both English and Turkish Gmail interfaces
 
 ## Installation
 
@@ -118,6 +119,13 @@ Each recipient will receive a **separate** scheduled email (not a group email).
 - The extension only works on `mail.google.com`
 - Form data is cleared after successful scheduling
 
+### Language Support
+- ✅ **English Gmail Interface** - Fully supported
+- ✅ **Turkish Gmail Interface** - Fully supported
+- The extension automatically detects and works with both language interfaces
+- All button and menu selectors support both English and Turkish text
+- No configuration needed - just works out of the box
+
 ## File Structure
 
 ```
@@ -190,7 +198,7 @@ gmail-train/
 ## Known Limitations
 
 1. **Gmail UI Dependencies**: The extension relies on Gmail's DOM structure, which may change
-2. **Language Support**: Currently optimized for Turkish Gmail interface (easily adaptable)
+2. **Language Support**: Supports both English and Turkish Gmail interfaces
 3. **Gmail Tab Must Stay Open**: Don't close or navigate away from Gmail tab during scheduling
 4. **Scheduling UI**: Gmail's schedule dialog structure may vary
 5. **Performance**: Each email takes ~15-18 seconds to schedule (optimized from 25-30 seconds)
@@ -217,8 +225,14 @@ For issues or questions:
 
 ## Version History
 
+- **v1.4.2** (October 23, 2025): English Language Support
+  - Full support for English Gmail interface
+  - Bilingual support (English & Turkish)
+  - Auto-detection of language
+  - All selectors updated for both languages
+
 - **v1.4.1** (October 23, 2025): Bug Fixes & Reliability
-  - Fixed "Gönderme zamanını planla" click issue
+  - Fixed "Schedule send" click issue
   - Enhanced click reliability with multiple fallback selectors
   - Increased timing for better stability
   - Improved error messages and logging

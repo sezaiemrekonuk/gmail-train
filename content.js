@@ -153,11 +153,11 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
     console.log('✅ Recipient filled');
   }
 
-  // Fill CC if provided
+  // Fill CC if provided (supports both Turkish and English)
   if (cc) {
     console.log(`Step 5: Filling CC: ${cc}...`);
     const ccButton = composeWindow.querySelector('span.aB.gQ.pE');
-    if (ccButton && ccButton.textContent.includes('Cc')) {
+    if (ccButton && (ccButton.textContent.includes('Cc') || ccButton.textContent.includes('CC'))) {
       ccButton.click();
       await sleep(TIMING.AFTER_CC_BUTTON);
       
@@ -184,10 +184,11 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
     console.log('✅ Subject filled');
   }
 
-  // Fill message body
+  // Fill message body (supports both Turkish and English)
   console.log('Step 7: Filling message body...');
-  const messageBody = composeWindow.querySelector('div[role="textbox"][aria-label*="İleti"]') || 
-                      composeWindow.querySelector('div[role="textbox"][aria-label*="Message"]') ||
+  const messageBody = composeWindow.querySelector('div[role="textbox"][aria-label*="Message"]') || 
+                      composeWindow.querySelector('div[role="textbox"][aria-label*="İleti"]') || 
+                      composeWindow.querySelector('div[contenteditable="true"][aria-label*="Message body"]') ||
                       composeWindow.querySelector('div[contenteditable="true"][aria-label*="Gövde"]') ||
                       composeWindow.querySelector('div[contenteditable="true"]');
   
@@ -199,16 +200,17 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
     console.log('✅ Message filled');
   }
 
-  // STEP 1: Click the dropdown arrow next to "Gönder" (Send) button
-  console.log('Step 8: Looking for schedule dropdown (arrow next to Gönder)...');
+  // STEP 1: Click the dropdown arrow next to Send button (supports both Turkish and English)
+  console.log('Step 8: Looking for schedule dropdown (arrow next to Send/Gönder)...');
   
-  // Look for the button with aria-label="Diğer gönderme seçenekleri"
-  const scheduleDropdown = composeWindow.querySelector('div[aria-label="Diğer gönderme seçenekleri"]') ||
+  // Look for the button - supports both languages
+  const scheduleDropdown = composeWindow.querySelector('div[aria-label*="More send options"]') ||
+                          composeWindow.querySelector('div[aria-label="Diğer gönderme seçenekleri"]') ||
                           composeWindow.querySelector('div.T-I.hG.T-I-atl[role="button"]') ||
                           composeWindow.querySelector('div.hG[role="button"]');
   
   if (!scheduleDropdown) {
-    throw new Error('Could not find schedule dropdown button (arrow next to Gönder)');
+    throw new Error('Could not find schedule dropdown button (arrow next to Send button)');
   }
   
   console.log('✅ Found dropdown, clicking...');
@@ -250,19 +252,19 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
   
   await sleep(TIMING.AFTER_DROPDOWN_CLICK);
 
-  // STEP 2: Click "Gönderme zamanını planla" (Schedule send) from dropdown
-  console.log('Step 9: Looking for "Gönderme zamanını planla" option...');
+  // STEP 2: Click "Schedule send" option from dropdown (supports both Turkish and English)
+  console.log('Step 9: Looking for "Schedule send" option...');
   await sleep(TIMING.BEFORE_MENU_SEARCH);
   
   // Try multiple selectors for the schedule send option
   let scheduleSendOption = document.querySelector('div[selector="scheduledSend"]');
   
   if (!scheduleSendOption) {
-    // Try finding by text content
+    // Try finding by text content - supports both English and Turkish
     scheduleSendOption = Array.from(document.querySelectorAll('div[role="menuitem"]')).find(item => {
       const text = item.textContent.toLowerCase();
-      return text.includes('gönderme zamanını planla') || 
-             text.includes('schedule send') ||
+      return text.includes('schedule send') || 
+             text.includes('gönderme zamanını planla') ||
              text.includes('zamanını planla');
     });
   }
@@ -275,10 +277,10 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
   if (!scheduleSendOption) {
     console.log('⚠️ Available menu items:', 
       Array.from(document.querySelectorAll('div[role="menuitem"]')).map(el => el.textContent));
-    throw new Error('Could not find "Gönderme zamanını planla" option');
+    throw new Error('Could not find "Schedule send" option');
   }
   
-  console.log('✅ Found "Gönderme zamanını planla", clicking...', scheduleSendOption);
+  console.log('✅ Found "Schedule send" option, clicking...', scheduleSendOption);
   console.log('Element visible:', scheduleSendOption.offsetParent !== null);
   console.log('Element text:', scheduleSendOption.textContent);
   
@@ -343,21 +345,23 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
   
   await sleep(TIMING.AFTER_DIALOG_READY);
   
-  // STEP 4: Click "Tarih ve saat seç" menuitem
-  console.log('Step 11: Looking for "Tarih ve saat seç" menuitem...');
+  // STEP 4: Click "Pick date & time" menuitem (supports both Turkish and English)
+  console.log('Step 11: Looking for "Pick date & time" menuitem...');
   
-  // Look for menuitem with class "Az AM" that contains "Tarih ve saat seç"
+  // Look for menuitem - supports both languages
   const pickDateTimeButton = Array.from(document.querySelectorAll('.Az[role="menuitem"]')).find(item => {
     const text = item.textContent.toLowerCase();
-    return text.includes('tarih ve saat seç') || text.includes('pick date');
+    return text.includes('pick date') || 
+           text.includes('tarih ve saat seç') ||
+           text.includes('pick time');
   });
   
   if (!pickDateTimeButton) {
-    console.log('⚠️ Could not find "Tarih ve saat seç" menuitem');
-    throw new Error('Could not find "Tarih ve saat seç" button');
+    console.log('⚠️ Could not find "Pick date & time" menuitem');
+    throw new Error('Could not find "Pick date & time" button');
   }
   
-  console.log('✅ Found "Tarih ve saat seç", clicking...');
+  console.log('✅ Found "Pick date & time", clicking...');
   
   // Scroll into view
   pickDateTimeButton.scrollIntoView({ behavior: 'instant', block: 'center' });
@@ -400,22 +404,23 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
   
   // FIRST: Click the calendar day (the calendar is already showing)
   const targetDay = scheduledDate.getDate();
-  const targetMonth = scheduledDate.toLocaleDateString('tr-TR', { month: 'short' }); // "Eki" for October
-  console.log(`Looking for day ${targetDay} in month ${targetMonth}...`);
+  const targetMonth = scheduledDate.getMonth(); // 0-11
+  console.log(`Looking for day ${targetDay} (month: ${targetMonth})...`);
   
-  // Find the td[role="gridcell"] with aria-label containing the day and month
+  // Find the td[role="gridcell"] with aria-label containing the day
+  // This works for both Turkish and English because we check the date number
   const dayCell = Array.from(document.querySelectorAll('td[role="gridcell"]')).find(cell => {
     const ariaLabel = cell.getAttribute('aria-label');
     if (!ariaLabel) return false;
     
-    // Match "23 Eki" or similar patterns
-    const matches = ariaLabel.match(/^(\d+)\s+(\w+)/);
+    // Match day number at the beginning (works for "23 Oct" or "23 Eki" or "October 23" etc.)
+    const matches = ariaLabel.match(/^(\d+)\s+/) || ariaLabel.match(/\s+(\d+)/);
     if (matches && matches[1] === String(targetDay)) {
       console.log(`Found potential day cell: ${ariaLabel}`);
       // Check if it's not disabled and not from a different month (J-JB-KA-Ku-Kk class)
       const isOtherMonth = cell.classList.contains('J-JB-KA-Ku-Kk');
       const isDisabled = cell.classList.contains('J-JB-KA-a1R-JB');
-      return !isOtherMonth;
+      return !isOtherMonth && !isDisabled;
     }
     return false;
   });
@@ -428,13 +433,13 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
     console.log(`⚠️ Could not find day ${targetDay}`);
   }
   
-  // SECOND: Set the time input
-  // Find the time input with aria-label="Zaman" (Time in Turkish)
-  const timeInput = document.querySelector('input[aria-label="Zaman"]') ||
-                   document.querySelector('input[aria-label="Time"]') ||
+  // SECOND: Set the time input (supports both Turkish and English)
+  // Find the time input by aria-label
+  const timeInput = document.querySelector('input[aria-label="Time"]') ||
+                   document.querySelector('input[aria-label="Zaman"]') ||
                    Array.from(document.querySelectorAll('input[type="text"]')).find(input => {
                      const label = input.getAttribute('aria-label');
-                     return label && (label.toLowerCase().includes('zaman') || label.toLowerCase().includes('time'));
+                     return label && (label.toLowerCase().includes('time') || label.toLowerCase().includes('zaman'));
                    });
   
   if (timeInput) {
@@ -464,14 +469,14 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
   
   await sleep(TIMING.BEFORE_FINAL_SAVE);
 
-  // STEP 6: Click "Kaydet" (Save) or "Gönderme zamanını planla" confirmation button
+  // STEP 6: Click Save/Schedule button (supports both Turkish and English)
   console.log('Step 13: Looking for save/schedule button...');
   const finalScheduleButton = Array.from(document.querySelectorAll('button, div[role="button"]')).find(btn => {
     const text = btn.textContent.toLowerCase();
-    return text.includes('kaydet') ||
+    return text.includes('schedule send') ||
            text.includes('save') ||
+           text.includes('kaydet') ||
            text.includes('gönderme zamanını planla') ||
-           text.includes('schedule send') ||
            text.includes('zamanını planla');
   });
   
