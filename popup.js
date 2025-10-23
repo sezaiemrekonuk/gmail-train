@@ -1,4 +1,10 @@
 document.addEventListener('DOMContentLoaded', function() {
+  // ⏱️ UI TIMING CONFIGURATION
+  const UI_TIMING = {
+    HIDE_PROGRESS_DELAY: 2000,      // Delay before hiding progress bar
+    HIDE_STATUS_DELAY: 5000         // Delay before hiding status messages
+  };
+
   const form = document.getElementById('emailForm');
   const statusDiv = document.getElementById('status');
   const progressDiv = document.getElementById('progress');
@@ -105,7 +111,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Hide progress after a delay
         setTimeout(() => {
           hideProgress();
-        }, 2000);
+        }, UI_TIMING.HIDE_PROGRESS_DELAY);
       } else {
         showStatus(response?.error || 'Failed to schedule emails', 'error');
       }
@@ -137,7 +143,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (message.current === message.total) {
         setTimeout(() => {
           hideProgress();
-        }, 2000);
+        }, UI_TIMING.HIDE_PROGRESS_DELAY);
       }
     }
   });
@@ -150,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (type === 'success' || type === 'error') {
       setTimeout(() => {
         statusDiv.classList.add('hidden');
-      }, 5000);
+      }, UI_TIMING.HIDE_STATUS_DELAY);
     }
   }
 

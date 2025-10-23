@@ -1,6 +1,50 @@
 // Gmail Scheduler Content Script
 console.log('Gmail Scheduler Extension Loaded');
 
+// ⏱️ TIMING CONFIGURATION
+// All timing values in milliseconds - adjust these to optimize performance
+const TIMING = {
+  // Compose window management
+  AFTER_CLOSE_WINDOWS: 800,        // Wait after closing old compose windows
+  AFTER_COMPOSE_CLICK: 1200,       // Wait after clicking compose button
+  COMPOSE_WINDOW_READY: 400,       // Wait for compose window to be ready
+  
+  // Form field filling
+  AFTER_RECIPIENT_FILL: 300,       // Wait after filling recipient
+  AFTER_CC_BUTTON: 200,            // Wait after clicking CC button
+  AFTER_CC_FILL: 300,              // Wait after filling CC
+  AFTER_SUBJECT_FILL: 200,         // Wait after filling subject
+  AFTER_MESSAGE_FILL: 500,         // Wait after filling message body
+  
+  // Schedule dropdown interactions
+  SCROLL_INTO_VIEW: 200,           // Wait after scrolling element into view
+  AFTER_DIRECT_CLICK: 150,         // Wait after direct click
+  BETWEEN_MOUSE_EVENTS: 40,        // Wait between mouseenter/mousedown/mouseup
+  AFTER_DROPDOWN_CLICK: 1200,      // Wait for dropdown to appear
+  BEFORE_MENU_SEARCH: 300,         // Wait before searching for menu items
+  
+  // Schedule dialog
+  AFTER_SCHEDULE_OPTION: 1500,     // Wait for schedule dialog to appear
+  AFTER_DIALOG_READY: 400,         // Wait after dialog is found
+  AFTER_DATETIME_CLICK: 1500,      // Wait for calendar to appear
+  
+  // Date/time picker
+  AFTER_DAY_CLICK: 600,            // Wait after clicking calendar day
+  BEFORE_TIME_INPUT: 150,          // Wait before setting time input
+  AFTER_TIME_CLEAR: 80,            // Wait after clearing time input
+  AFTER_TIME_SET: 400,             // Wait after setting time
+  BEFORE_FINAL_SAVE: 600,          // Wait before clicking final save button
+  
+  // Final confirmation
+  AFTER_SAVE_SCROLL: 200,          // Wait after scrolling to save button
+  AFTER_SAVE_CLICK: 1500,          // Wait for schedule to complete
+  AFTER_SCHEDULE_COMPLETE: 1500,   // Wait after scheduling is done
+  AFTER_FINAL_CLOSE: 400,          // Wait after closing compose window
+  
+  // Element waiting
+  WAIT_FOR_ELEMENT_CHECK: 200      // Interval for waitForElement checks
+};
+
 // Listen for messages from popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'scheduleEmails') {
@@ -75,7 +119,7 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
   // FIRST: Close any old compose windows
   console.log('Step 1: Closing old compose windows...');
   await closeAllComposeWindows();
-  await sleep(1500); // Wait longer for Gmail to recover
+  await sleep(TIMING.AFTER_CLOSE_WINDOWS);
   
   // Click compose button to open NEW compose window
   console.log('Step 2: Opening new compose window...');
@@ -85,7 +129,7 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
   }
   composeButton.click();
   
-  await sleep(2000); // Wait longer for compose to fully load
+  await sleep(TIMING.AFTER_COMPOSE_CLICK);
 
   // Wait for the NEW compose window
   console.log('Step 3: Waiting for compose window...');
@@ -95,7 +139,7 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
   }
   console.log('✅ Compose window opened');
   
-  await sleep(500);
+  await sleep(TIMING.COMPOSE_WINDOW_READY);
 
   // Fill recipient
   console.log(`Step 4: Filling recipient: ${toEmail}...`);
@@ -105,7 +149,7 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
     toInput.value = toEmail;
     toInput.dispatchEvent(new Event('input', { bubbles: true }));
     toInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, bubbles: true }));
-    await sleep(500);
+    await sleep(TIMING.AFTER_RECIPIENT_FILL);
     console.log('✅ Recipient filled');
   }
 
@@ -115,7 +159,7 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
     const ccButton = composeWindow.querySelector('span.aB.gQ.pE');
     if (ccButton && ccButton.textContent.includes('Cc')) {
       ccButton.click();
-      await sleep(300);
+      await sleep(TIMING.AFTER_CC_BUTTON);
       
       const ccInput = composeWindow.querySelector('div[name="cc"] input[peoplekit-id="BbVjBd"]');
       if (ccInput) {
@@ -123,7 +167,7 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
         ccInput.value = cc;
         ccInput.dispatchEvent(new Event('input', { bubbles: true }));
         ccInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, bubbles: true }));
-        await sleep(500);
+        await sleep(TIMING.AFTER_CC_FILL);
         console.log('✅ CC filled');
       }
     }
@@ -136,7 +180,7 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
     subjectInput.focus();
     subjectInput.value = subject;
     subjectInput.dispatchEvent(new Event('input', { bubbles: true }));
-    await sleep(300);
+    await sleep(TIMING.AFTER_SUBJECT_FILL);
     console.log('✅ Subject filled');
   }
 
@@ -151,7 +195,7 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
     messageBody.focus();
     messageBody.innerHTML = message.replace(/\n/g, '<br>');
     messageBody.dispatchEvent(new Event('input', { bubbles: true }));
-    await sleep(800);
+    await sleep(TIMING.AFTER_MESSAGE_FILL);
     console.log('✅ Message filled');
   }
 
@@ -171,13 +215,13 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
   
   // Scroll into view
   scheduleDropdown.scrollIntoView({ behavior: 'instant', block: 'center' });
-  await sleep(300);
+  await sleep(TIMING.SCROLL_INTO_VIEW);
   
   // Try multiple click methods
   try {
     // Method 1: Direct click
     scheduleDropdown.click();
-    await sleep(200);
+    await sleep(TIMING.AFTER_DIRECT_CLICK);
     
     // Method 2: Mouse events with proper coordinates
     const rect = scheduleDropdown.getBoundingClientRect();
@@ -193,22 +237,22 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
     };
     
     scheduleDropdown.dispatchEvent(new MouseEvent('mouseenter', mouseEventOptions));
-    await sleep(100);
+    await sleep(TIMING.BETWEEN_MOUSE_EVENTS);
     scheduleDropdown.dispatchEvent(new MouseEvent('mousedown', mouseEventOptions));
-    await sleep(50);
+    await sleep(TIMING.BETWEEN_MOUSE_EVENTS);
     scheduleDropdown.dispatchEvent(new MouseEvent('mouseup', mouseEventOptions));
-    await sleep(50);
+    await sleep(TIMING.BETWEEN_MOUSE_EVENTS);
     scheduleDropdown.dispatchEvent(new MouseEvent('click', mouseEventOptions));
     
   } catch (e) {
     console.log('Click error:', e);
   }
   
-  await sleep(2000); // Wait longer for dropdown to appear
+  await sleep(TIMING.AFTER_DROPDOWN_CLICK);
 
   // STEP 2: Click "Gönderme zamanını planla" (Schedule send) from dropdown
   console.log('Step 9: Looking for "Gönderme zamanını planla" option...');
-  await sleep(500);
+  await sleep(TIMING.BEFORE_MENU_SEARCH);
   
   // The element with selector="scheduledSend"
   const scheduleSendOption = document.querySelector('div[selector="scheduledSend"]') ||
@@ -222,12 +266,12 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
   
   // Scroll into view
   scheduleSendOption.scrollIntoView({ behavior: 'instant', block: 'center' });
-  await sleep(300);
+  await sleep(TIMING.SCROLL_INTO_VIEW);
   
   // Multiple click methods
   try {
     scheduleSendOption.click();
-    await sleep(200);
+    await sleep(TIMING.AFTER_DIRECT_CLICK);
     
     const rect = scheduleSendOption.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
@@ -242,11 +286,11 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
     };
     
     scheduleSendOption.dispatchEvent(new MouseEvent('mouseenter', mouseEventOptions));
-    await sleep(100);
+    await sleep(TIMING.BETWEEN_MOUSE_EVENTS);
     scheduleSendOption.dispatchEvent(new MouseEvent('mousedown', mouseEventOptions));
-    await sleep(50);
+    await sleep(TIMING.BETWEEN_MOUSE_EVENTS);
     scheduleSendOption.dispatchEvent(new MouseEvent('mouseup', mouseEventOptions));
-    await sleep(50);
+    await sleep(TIMING.BETWEEN_MOUSE_EVENTS);
     scheduleSendOption.dispatchEvent(new MouseEvent('click', mouseEventOptions));
   } catch (e) {
     console.log('Click error:', e);
@@ -254,7 +298,7 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
   
   // STEP 3: Wait for the dialog with class "uW2Fw-bHj" to appear
   console.log('Step 10: Waiting for schedule dialog to appear...');
-  await sleep(2500); // Wait longer for dialog
+  await sleep(TIMING.AFTER_SCHEDULE_OPTION);
   
   // Wait for the dialog
   const scheduleDialog = await waitForElement('.uW2Fw-bHj', 3000);
@@ -264,7 +308,7 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
   }
   console.log('✅ Schedule dialog appeared');
   
-  await sleep(500);
+  await sleep(TIMING.AFTER_DIALOG_READY);
   
   // STEP 4: Click "Tarih ve saat seç" menuitem
   console.log('Step 11: Looking for "Tarih ve saat seç" menuitem...');
@@ -284,12 +328,12 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
   
   // Scroll into view
   pickDateTimeButton.scrollIntoView({ behavior: 'instant', block: 'center' });
-  await sleep(300);
+  await sleep(TIMING.SCROLL_INTO_VIEW);
   
   // Multiple click methods
   try {
     pickDateTimeButton.click();
-    await sleep(200);
+    await sleep(TIMING.AFTER_DIRECT_CLICK);
     
     const rect = pickDateTimeButton.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
@@ -304,17 +348,17 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
     };
     
     pickDateTimeButton.dispatchEvent(new MouseEvent('mouseenter', mouseEventOptions));
-    await sleep(100);
+    await sleep(TIMING.BETWEEN_MOUSE_EVENTS);
     pickDateTimeButton.dispatchEvent(new MouseEvent('mousedown', mouseEventOptions));
-    await sleep(50);
+    await sleep(TIMING.BETWEEN_MOUSE_EVENTS);
     pickDateTimeButton.dispatchEvent(new MouseEvent('mouseup', mouseEventOptions));
-    await sleep(50);
+    await sleep(TIMING.BETWEEN_MOUSE_EVENTS);
     pickDateTimeButton.dispatchEvent(new MouseEvent('click', mouseEventOptions));
   } catch (e) {
     console.log('Click error:', e);
   }
   
-  await sleep(2500); // Wait longer for calendar to appear
+  await sleep(TIMING.AFTER_DATETIME_CLICK);
 
   // STEP 5: Set the date and time in the calendar/time picker
   console.log('Step 12: Setting date and time...');
@@ -346,7 +390,7 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
   if (dayCell) {
     console.log(`✅ Found day ${targetDay}, clicking...`);
     dayCell.click();
-    await sleep(800);
+    await sleep(TIMING.AFTER_DAY_CLICK);
   } else {
     console.log(`⚠️ Could not find day ${targetDay}`);
   }
@@ -367,25 +411,25 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
     
     console.log(`Setting time to: ${timeStr}`);
     timeInput.focus();
-    await sleep(200);
+    await sleep(TIMING.BEFORE_TIME_INPUT);
     
     // Clear and set value
     timeInput.value = '';
     timeInput.dispatchEvent(new Event('input', { bubbles: true }));
-    await sleep(100);
+    await sleep(TIMING.AFTER_TIME_CLEAR);
     
     timeInput.value = timeStr;
     timeInput.dispatchEvent(new Event('input', { bubbles: true }));
     timeInput.dispatchEvent(new Event('change', { bubbles: true }));
     timeInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, bubbles: true }));
     
-    await sleep(500);
+    await sleep(TIMING.AFTER_TIME_SET);
     console.log('✅ Time set');
   } else {
     console.log('⚠️ Could not find time input');
   }
   
-  await sleep(800);
+  await sleep(TIMING.BEFORE_FINAL_SAVE);
 
   // STEP 6: Click "Kaydet" (Save) or "Gönderme zamanını planla" confirmation button
   console.log('Step 13: Looking for save/schedule button...');
@@ -403,11 +447,11 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
     
     // Scroll and click properly
     finalScheduleButton.scrollIntoView({ behavior: 'instant', block: 'center' });
-    await sleep(300);
+    await sleep(TIMING.AFTER_SAVE_SCROLL);
     
     try {
       finalScheduleButton.click();
-      await sleep(200);
+      await sleep(TIMING.AFTER_DIRECT_CLICK);
       
       const rect = finalScheduleButton.getBoundingClientRect();
       const centerX = rect.left + rect.width / 2;
@@ -422,27 +466,27 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
       };
       
       finalScheduleButton.dispatchEvent(new MouseEvent('mousedown', mouseEventOptions));
-      await sleep(50);
+      await sleep(TIMING.BETWEEN_MOUSE_EVENTS);
       finalScheduleButton.dispatchEvent(new MouseEvent('mouseup', mouseEventOptions));
-      await sleep(50);
+      await sleep(TIMING.BETWEEN_MOUSE_EVENTS);
       finalScheduleButton.dispatchEvent(new MouseEvent('click', mouseEventOptions));
     } catch (e) {
       console.log('Click error:', e);
     }
     
-    await sleep(2000);
+    await sleep(TIMING.AFTER_SAVE_CLICK);
   } else {
     console.log('⚠️ Could not find final schedule button');
   }
 
   // Wait to ensure scheduling is complete
   console.log('Step 14: Waiting for schedule to complete...');
-  await sleep(2500);
+  await sleep(TIMING.AFTER_SCHEDULE_COMPLETE);
   
   // Close this compose window
   console.log('Step 15: Closing compose window...');
   await closeAllComposeWindows();
-  await sleep(500);
+  await sleep(TIMING.AFTER_FINAL_CLOSE);
   
   console.log(`✅ Successfully scheduled email to ${toEmail}!\n`);
 }
@@ -493,13 +537,13 @@ async function closeAllComposeWindows() {
         bubbles: true,
         cancelable: true
       }));
-      await sleep(300);
+      await sleep(TIMING.SCROLL_INTO_VIEW); // 200ms between ESC presses
     } catch (e) {
       console.log('⚠️ Error sending ESC:', e);
     }
   }
   
-  await sleep(500);
+  await sleep(TIMING.AFTER_FINAL_CLOSE); // 400ms final wait
   console.log('✨ Finished closing compose windows');
 }
 
