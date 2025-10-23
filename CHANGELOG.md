@@ -36,6 +36,9 @@
 - Added 1 second wait after closing compose windows
 - Ensures Gmail has time to process each action
 
+### New Design
+- Changed the appearance of the extension to be more modern and clean.
+
 ### 📝 Code Changes
 
 **popup.js**
@@ -51,9 +54,11 @@
 
 **popup.html**
 - Added info box with explanation
+- Added new design to the extension.
 
 **popup.css**
 - New styles for info box with gradient background
+- New styles for the extension.
 
 ---
 
