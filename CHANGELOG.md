@@ -1,5 +1,85 @@
 # Changelog
 
+## Version 1.3.0 (October 23, 2025)
+
+### ✨ Major Features
+
+**📝 WYSIWYG HTML Editor**
+- **New**: Rich text editor for composing HTML emails
+- Simple and effective toolbar with essential formatting options
+- No external dependencies - custom built for performance
+
+**Editor Features**:
+- **Text Formatting**: Bold, Italic, Underline
+- **Lists**: Bullet lists and numbered lists
+- **Links**: Insert clickable hyperlinks
+- **Clear Formatting**: Remove all formatting with one click
+- **Keyboard Shortcuts**: 
+  - `Ctrl+B` / `Cmd+B` for Bold
+  - `Ctrl+I` / `Cmd+I` for Italic
+  - `Ctrl+U` / `Cmd+U` for Underline
+
+**Design**:
+- Matches the extension's classy black-white aesthetic
+- Dark toolbar with hover effects
+- Custom scrollbar for editor area
+- Smooth transitions and animations
+- Placeholder text for better UX
+- Auto-focus support
+
+**HTML Support**:
+- Full HTML email composition
+- Formatted text appears exactly as typed in Gmail
+- Links are styled and clickable
+- Lists maintain proper formatting
+- Clean HTML output
+
+### 🎨 UI Improvements
+
+**Editor Interface**:
+- Clean toolbar with intuitive icons
+- Scrollable editor area (max height: 200px)
+- Visual feedback on hover and click
+- Separator lines for grouping related tools
+- Responsive layout
+
+**Styling**:
+- Proper styling for bold, italic, underline in editor
+- Link colors: `#6eb6ff` (matches Gmail's blue)
+- List indentation and spacing
+- Custom scrollbar matching the extension theme
+
+### 🔧 Technical Implementation
+
+**popup.html**:
+- Replaced textarea with contenteditable div
+- Added toolbar with formatting buttons
+- Semantic HTML structure
+
+**popup.css**:
+- New styles for `.editor-container`, `.editor-toolbar`, `.toolbar-btn`
+- Styles for `.editor-content` with placeholder support
+- Custom scrollbar styles
+- Hover and active states for buttons
+
+**popup.js**:
+- Editor initialization with toolbar event listeners
+- `document.execCommand()` for formatting commands
+- Keyboard shortcut handlers
+- HTML content validation
+- Form reset clears editor content
+
+### 📝 Benefits
+
+- ✅ Create professional HTML emails
+- ✅ No need to write HTML manually
+- ✅ Easy-to-use interface
+- ✅ Lightweight implementation
+- ✅ Maintains extension's aesthetic
+- ✅ Works seamlessly with existing features
+
+---
+
 ## Version 1.2.1 (October 23, 2025)
 
 ### ⚡ Performance Improvements

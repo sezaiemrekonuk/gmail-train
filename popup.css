@@ -125,6 +125,138 @@ textarea {
   min-height: 60px;
 }
 
+/* WYSIWYG Editor Styles */
+.editor-container {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.03);
+  transition: all 0.3s ease;
+}
+
+.editor-container:focus-within {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
+}
+
+.editor-toolbar {
+  display: flex;
+  gap: 4px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  flex-wrap: wrap;
+}
+
+.toolbar-btn {
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  min-width: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toolbar-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.toolbar-btn:active {
+  transform: translateY(0);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.toolbar-separator {
+  width: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 4px 4px;
+}
+
+.editor-content {
+  padding: 12px 14px;
+  min-height: 120px;
+  max-height: 200px;
+  overflow-y: auto;
+  font-size: 14px;
+  color: #ffffff;
+  line-height: 1.6;
+  outline: none;
+}
+
+.editor-content:empty:before {
+  content: attr(data-placeholder);
+  color: rgba(255, 255, 255, 0.3);
+  pointer-events: none;
+}
+
+.editor-content:focus:before {
+  content: none;
+}
+
+/* Style HTML elements in editor */
+.editor-content strong,
+.editor-content b {
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.editor-content em,
+.editor-content i {
+  font-style: italic;
+}
+
+.editor-content u {
+  text-decoration: underline;
+}
+
+.editor-content ul,
+.editor-content ol {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+
+.editor-content li {
+  margin: 4px 0;
+}
+
+.editor-content a {
+  color: #6eb6ff;
+  text-decoration: underline;
+}
+
+.editor-content a:hover {
+  color: #9dcfff;
+}
+
+/* Custom scrollbar for editor */
+.editor-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.editor-content::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.editor-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.editor-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
 small {
   display: block;
   font-size: 11px;

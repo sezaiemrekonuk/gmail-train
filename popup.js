@@ -18,6 +18,48 @@ document.addEventListener('DOMContentLoaded', function() {
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
   document.getElementById('plannedDate').min = now.toISOString().slice(0, 16);
 
+  // Initialize WYSIWYG Editor
+  const messageEditor = document.getElementById('message');
+  const toolbarButtons = document.querySelectorAll('.toolbar-btn');
+
+  toolbarButtons.forEach(button => {
+    button.addEventListener('click', function(e) {
+      e.preventDefault();
+      const command = this.getAttribute('data-command');
+      
+      if (command === 'createLink') {
+        const url = prompt('Enter the URL:');
+        if (url) {
+          document.execCommand(command, false, url);
+        }
+      } else {
+        document.execCommand(command, false, null);
+      }
+      
+      messageEditor.focus();
+    });
+  });
+
+  // Keyboard shortcuts for editor
+  messageEditor.addEventListener('keydown', function(e) {
+    if (e.ctrlKey || e.metaKey) {
+      switch(e.key.toLowerCase()) {
+        case 'b':
+          e.preventDefault();
+          document.execCommand('bold');
+          break;
+        case 'i':
+          e.preventDefault();
+          document.execCommand('italic');
+          break;
+        case 'u':
+          e.preventDefault();
+          document.execCommand('underline');
+          break;
+      }
+    }
+  });
+
   // Stop button handler
   stopBtn.addEventListener('click', async function() {
     await chrome.storage.local.set({ shouldStop: true });
@@ -32,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const emailsInput = document.getElementById('emails').value;
     const cc = document.getElementById('cc').value.trim();
     const subject = document.getElementById('subject').value;
-    const message = document.getElementById('message').value;
+    const messageHTML = document.getElementById('message').innerHTML.trim();
     const plannedDate = document.getElementById('plannedDate').value;
     const delay = parseInt(document.getElementById('delay').value) || 5;
 
@@ -41,6 +83,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (emails.length === 0) {
       showStatus('Please enter at least one email address', 'error');
+      return;
+    }
+
+    // Validate message content
+    if (!messageHTML || messageHTML === '<br>' || messageHTML === '') {
+      showStatus('Please enter a message', 'error');
+      messageEditor.focus();
       return;
     }
 
@@ -78,7 +127,7 @@ document.addEventListener('DOMContentLoaded', function() {
           emails,
           cc,
           subject,
-          message,
+          message: messageHTML,
           plannedDate: scheduledTime.toISOString(),
           delay
         }
@@ -103,6 +152,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Clear the form only if all were scheduled
         if (!wasStopped) {
           form.reset();
+          messageEditor.innerHTML = ''; // Clear WYSIWYG editor
         }
         
         // Clear any stored data
