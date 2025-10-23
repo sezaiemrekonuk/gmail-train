@@ -6,8 +6,8 @@ console.log('Gmail Scheduler Extension Loaded');
 const TIMING = {
   // Compose window management
   AFTER_CLOSE_WINDOWS: 800,        // Wait after closing old compose windows
-  AFTER_COMPOSE_CLICK: 1200,       // Wait after clicking compose button
-  COMPOSE_WINDOW_READY: 400,       // Wait for compose window to be ready
+  AFTER_COMPOSE_CLICK: 300,       // Wait after clicking compose button
+  COMPOSE_WINDOW_READY: 200,       // Wait for compose window to be ready
   
   // Form field filling
   AFTER_RECIPIENT_FILL: 300,       // Wait after filling recipient
@@ -20,13 +20,13 @@ const TIMING = {
   SCROLL_INTO_VIEW: 200,           // Wait after scrolling element into view
   AFTER_DIRECT_CLICK: 150,         // Wait after direct click
   BETWEEN_MOUSE_EVENTS: 40,        // Wait between mouseenter/mousedown/mouseup
-  AFTER_DROPDOWN_CLICK: 1200,      // Wait for dropdown to appear
+  AFTER_DROPDOWN_CLICK: 300,      // Wait for dropdown to appear
   BEFORE_MENU_SEARCH: 300,         // Wait before searching for menu items
   
   // Schedule dialog
-  AFTER_SCHEDULE_OPTION: 1500,     // Wait for schedule dialog to appear
+  AFTER_SCHEDULE_OPTION: 400,     // Wait for schedule dialog to appear
   AFTER_DIALOG_READY: 400,         // Wait after dialog is found
-  AFTER_DATETIME_CLICK: 1500,      // Wait for calendar to appear
+  AFTER_DATETIME_CLICK: 500,      // Wait for calendar to appear
   
   // Date/time picker
   AFTER_DAY_CLICK: 600,            // Wait after clicking calendar day
@@ -37,8 +37,8 @@ const TIMING = {
   
   // Final confirmation
   AFTER_SAVE_SCROLL: 200,          // Wait after scrolling to save button
-  AFTER_SAVE_CLICK: 1500,          // Wait for schedule to complete
-  AFTER_SCHEDULE_COMPLETE: 1500,   // Wait after scheduling is done
+  AFTER_SAVE_CLICK: 100,          // Wait for schedule to complete
+  AFTER_SCHEDULE_COMPLETE: 100,   // Wait after scheduling is done
   AFTER_FINAL_CLOSE: 400,          // Wait after closing compose window
   
   // Element waiting
