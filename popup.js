@@ -5,11 +5,19 @@ document.addEventListener('DOMContentLoaded', function() {
   const progressBar = document.getElementById('progressBar');
   const progressText = document.getElementById('progressText');
   const scheduleBtn = document.getElementById('scheduleBtn');
+  const stopBtn = document.getElementById('stopBtn');
 
   // Set minimum date to current date/time
   const now = new Date();
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
   document.getElementById('plannedDate').min = now.toISOString().slice(0, 16);
+
+  // Stop button handler
+  stopBtn.addEventListener('click', async function() {
+    await chrome.storage.local.set({ shouldStop: true });
+    showStatus('⏹ Stopping after current email...', 'info');
+    stopBtn.disabled = true;
+  });
 
   form.addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -41,12 +49,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     
     if (!tab.url || !tab.url.includes('mail.google.com')) {
-      showStatus('Please open Gmail first, then use this extension', 'error');
+      showStatus('❌ Please open Gmail (mail.google.com) first!', 'error');
       return;
     }
 
-    // Disable form
+    // Disable form and show stop button
     scheduleBtn.disabled = true;
+    stopBtn.classList.remove('hidden');
+    stopBtn.disabled = false;
+    
+    // Clear any previous stop flag
+    await chrome.storage.local.set({ shouldStop: false });
+    
     showStatus('Starting email scheduling...', 'info');
     showProgress(0, emails.length);
 
@@ -62,13 +76,28 @@ document.addEventListener('DOMContentLoaded', function() {
           plannedDate: scheduledTime.toISOString(),
           delay
         }
+      }).catch(error => {
+        // Handle connection error
+        if (error.message.includes('Receiving end does not exist')) {
+          throw new Error('Please refresh your Gmail tab and try again');
+        }
+        throw error;
       });
 
       if (response && response.success) {
-        showStatus(`Successfully scheduled ${emails.length} email(s)!`, 'success');
+        const wasStopped = response.stopped || false;
+        const completedCount = response.completed || emails.length;
         
-        // Clear the form
-        form.reset();
+        if (wasStopped) {
+          showStatus(`⏹ Stopped! Scheduled ${completedCount} of ${emails.length} email(s).`, 'info');
+        } else {
+          showStatus(`✅ Successfully scheduled ${emails.length} email(s)!`, 'success');
+        }
+        
+        // Clear the form only if all were scheduled
+        if (!wasStopped) {
+          form.reset();
+        }
         
         // Clear any stored data
         chrome.storage.local.clear();
@@ -76,16 +105,28 @@ document.addEventListener('DOMContentLoaded', function() {
         // Hide progress after a delay
         setTimeout(() => {
           hideProgress();
-          showStatus('All emails scheduled! Form cleared.', 'success');
         }, 2000);
       } else {
         showStatus(response?.error || 'Failed to schedule emails', 'error');
       }
     } catch (error) {
       console.error('Error:', error);
-      showStatus('Error: ' + error.message, 'error');
+      
+      // User-friendly error messages
+      let errorMessage = error.message;
+      
+      if (error.message.includes('Receiving end does not exist') || 
+          error.message.includes('refresh your Gmail tab')) {
+        errorMessage = '🔄 Please refresh your Gmail tab and try again!';
+      } else if (error.message.includes('Could not establish connection')) {
+        errorMessage = '🔄 Gmail tab needs to be refreshed. Please reload the page.';
+      }
+      
+      showStatus(errorMessage, 'error');
     } finally {
       scheduleBtn.disabled = false;
+      stopBtn.classList.add('hidden');
+      stopBtn.disabled = false;
     }
   });
 

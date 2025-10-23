@@ -5,8 +5,12 @@ console.log('Gmail Scheduler Extension Loaded');
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'scheduleEmails') {
     scheduleEmailsSequentially(request.data)
-      .then(() => {
-        sendResponse({ success: true });
+      .then((result) => {
+        sendResponse({ 
+          success: true, 
+          stopped: result.stopped,
+          completed: result.completed 
+        });
       })
       .catch(error => {
         console.error('Error scheduling emails:', error);
@@ -18,12 +22,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 async function scheduleEmailsSequentially(data) {
   const { emails, cc, subject, message, plannedDate, delay } = data;
-  
-  // Close any existing compose windows first
-  await closeAllComposeWindows();
-  await sleep(1000);
+  let stopped = false;
+  let completedCount = 0;
   
   for (let i = 0; i < emails.length; i++) {
+    // Check if user clicked stop button
+    const storage = await chrome.storage.local.get(['shouldStop']);
+    if (storage.shouldStop === true) {
+      console.log('🛑 Stop requested by user');
+      stopped = true;
+      break;
+    }
+    
     const email = emails[i];
     
     // Update progress
@@ -34,15 +44,13 @@ async function scheduleEmailsSequentially(data) {
     });
 
     try {
-      // Make sure all previous compose windows are closed
-      await closeAllComposeWindows();
-      await sleep(500);
-      
-      // Schedule this email
+      // Schedule this email (it handles its own window closing)
       await scheduleEmail(email, cc, subject, message, plannedDate);
+      completedCount++;
       
       // Wait before processing next email (except for the last one)
       if (i < emails.length - 1) {
+        console.log(`Waiting ${delay} seconds before next email...`);
         await sleep(delay * 1000);
       }
     } catch (error) {
@@ -54,31 +62,43 @@ async function scheduleEmailsSequentially(data) {
   // Final progress update
   chrome.runtime.sendMessage({
     action: 'updateProgress',
-    current: emails.length,
+    current: completedCount,
     total: emails.length
   });
   
-  // Close any remaining compose windows
-  await closeAllComposeWindows();
+  return { stopped, completed: completedCount };
 }
 
 async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
-  // Click compose button
+  console.log(`\n📧 Starting to schedule email to: ${toEmail}`);
+  
+  // FIRST: Close any old compose windows
+  console.log('Step 1: Closing old compose windows...');
+  await closeAllComposeWindows();
+  await sleep(1500); // Wait longer for Gmail to recover
+  
+  // Click compose button to open NEW compose window
+  console.log('Step 2: Opening new compose window...');
   const composeButton = await waitForElement('div.T-I.T-I-KE.L3');
   if (!composeButton) {
     throw new Error('Could not find compose button');
   }
   composeButton.click();
   
-  await sleep(1000);
+  await sleep(2000); // Wait longer for compose to fully load
 
-  // Wait for compose window
+  // Wait for the NEW compose window
+  console.log('Step 3: Waiting for compose window...');
   const composeWindow = await waitForElement('div[role="dialog"]', 5000);
   if (!composeWindow) {
     throw new Error('Compose window did not open');
   }
+  console.log('✅ Compose window opened');
+  
+  await sleep(500);
 
   // Fill recipient
+  console.log(`Step 4: Filling recipient: ${toEmail}...`);
   const toInput = composeWindow.querySelector('input[peoplekit-id="BbVjBd"]');
   if (toInput) {
     toInput.focus();
@@ -86,10 +106,12 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
     toInput.dispatchEvent(new Event('input', { bubbles: true }));
     toInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, bubbles: true }));
     await sleep(500);
+    console.log('✅ Recipient filled');
   }
 
   // Fill CC if provided
   if (cc) {
+    console.log(`Step 5: Filling CC: ${cc}...`);
     const ccButton = composeWindow.querySelector('span.aB.gQ.pE');
     if (ccButton && ccButton.textContent.includes('Cc')) {
       ccButton.click();
@@ -102,112 +124,327 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
         ccInput.dispatchEvent(new Event('input', { bubbles: true }));
         ccInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, bubbles: true }));
         await sleep(500);
+        console.log('✅ CC filled');
       }
     }
   }
 
   // Fill subject
+  console.log(`Step 6: Filling subject: ${subject}...`);
   const subjectInput = composeWindow.querySelector('input[name="subjectbox"]');
   if (subjectInput) {
     subjectInput.focus();
     subjectInput.value = subject;
     subjectInput.dispatchEvent(new Event('input', { bubbles: true }));
     await sleep(300);
+    console.log('✅ Subject filled');
   }
 
   // Fill message body
+  console.log('Step 7: Filling message body...');
   const messageBody = composeWindow.querySelector('div[role="textbox"][aria-label*="İleti"]') || 
                       composeWindow.querySelector('div[role="textbox"][aria-label*="Message"]') ||
-                      composeWindow.querySelector('div[contenteditable="true"][aria-label*="Body"]');
+                      composeWindow.querySelector('div[contenteditable="true"][aria-label*="Gövde"]') ||
+                      composeWindow.querySelector('div[contenteditable="true"]');
   
   if (messageBody) {
     messageBody.focus();
     messageBody.innerHTML = message.replace(/\n/g, '<br>');
     messageBody.dispatchEvent(new Event('input', { bubbles: true }));
-    await sleep(500);
+    await sleep(800);
+    console.log('✅ Message filled');
   }
 
-  // Click schedule send button (the dropdown arrow next to Send)
-  const scheduleDropdown = composeWindow.querySelector('div[role="button"].T-I.hG') ||
-                          composeWindow.querySelector('div.T-I.hG.T-I-atl');
+  // STEP 1: Click the dropdown arrow next to "Gönder" (Send) button
+  console.log('Step 8: Looking for schedule dropdown (arrow next to Gönder)...');
+  
+  // Look for the button with aria-label="Diğer gönderme seçenekleri"
+  const scheduleDropdown = composeWindow.querySelector('div[aria-label="Diğer gönderme seçenekleri"]') ||
+                          composeWindow.querySelector('div.T-I.hG.T-I-atl[role="button"]') ||
+                          composeWindow.querySelector('div.hG[role="button"]');
   
   if (!scheduleDropdown) {
-    throw new Error('Could not find schedule send dropdown button');
+    throw new Error('Could not find schedule dropdown button (arrow next to Gönder)');
   }
   
-  scheduleDropdown.click();
+  console.log('✅ Found dropdown, clicking...');
+  
+  // Scroll into view
+  scheduleDropdown.scrollIntoView({ behavior: 'instant', block: 'center' });
+  await sleep(300);
+  
+  // Try multiple click methods
+  try {
+    // Method 1: Direct click
+    scheduleDropdown.click();
+    await sleep(200);
+    
+    // Method 2: Mouse events with proper coordinates
+    const rect = scheduleDropdown.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    
+    const mouseEventOptions = {
+      view: window,
+      bubbles: true,
+      cancelable: true,
+      clientX: centerX,
+      clientY: centerY
+    };
+    
+    scheduleDropdown.dispatchEvent(new MouseEvent('mouseenter', mouseEventOptions));
+    await sleep(100);
+    scheduleDropdown.dispatchEvent(new MouseEvent('mousedown', mouseEventOptions));
+    await sleep(50);
+    scheduleDropdown.dispatchEvent(new MouseEvent('mouseup', mouseEventOptions));
+    await sleep(50);
+    scheduleDropdown.dispatchEvent(new MouseEvent('click', mouseEventOptions));
+    
+  } catch (e) {
+    console.log('Click error:', e);
+  }
+  
+  await sleep(2000); // Wait longer for dropdown to appear
+
+  // STEP 2: Click "Gönderme zamanını planla" (Schedule send) from dropdown
+  console.log('Step 9: Looking for "Gönderme zamanını planla" option...');
   await sleep(500);
-
-  // Click "Schedule send" option
-  const scheduleSendOption = await waitForElement('div[selector="scheduledSend"]', 2000);
+  
+  // The element with selector="scheduledSend"
+  const scheduleSendOption = document.querySelector('div[selector="scheduledSend"]') ||
+                             document.querySelector('.J-N[selector="scheduledSend"]');
+  
   if (!scheduleSendOption) {
-    throw new Error('Could not find schedule send option');
+    throw new Error('Could not find "Gönderme zamanını planla" option');
   }
   
-  scheduleSendOption.click();
-  await sleep(1000);
-
-  // Wait for schedule dialog to appear
-  const scheduleDialog = await waitForElement('div[role="dialog"]', 3000);
+  console.log('✅ Found "Gönderme zamanını planla", clicking...');
+  
+  // Scroll into view
+  scheduleSendOption.scrollIntoView({ behavior: 'instant', block: 'center' });
+  await sleep(300);
+  
+  // Multiple click methods
+  try {
+    scheduleSendOption.click();
+    await sleep(200);
+    
+    const rect = scheduleSendOption.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    
+    const mouseEventOptions = {
+      view: window,
+      bubbles: true,
+      cancelable: true,
+      clientX: centerX,
+      clientY: centerY
+    };
+    
+    scheduleSendOption.dispatchEvent(new MouseEvent('mouseenter', mouseEventOptions));
+    await sleep(100);
+    scheduleSendOption.dispatchEvent(new MouseEvent('mousedown', mouseEventOptions));
+    await sleep(50);
+    scheduleSendOption.dispatchEvent(new MouseEvent('mouseup', mouseEventOptions));
+    await sleep(50);
+    scheduleSendOption.dispatchEvent(new MouseEvent('click', mouseEventOptions));
+  } catch (e) {
+    console.log('Click error:', e);
+  }
+  
+  // STEP 3: Wait for the dialog with class "uW2Fw-bHj" to appear
+  console.log('Step 10: Waiting for schedule dialog to appear...');
+  await sleep(2500); // Wait longer for dialog
+  
+  // Wait for the dialog
+  const scheduleDialog = await waitForElement('.uW2Fw-bHj', 3000);
   if (!scheduleDialog) {
+    console.log('⚠️ Schedule dialog not found');
     throw new Error('Schedule dialog did not appear');
   }
-
-  // Click "Pick date & time" option
-  const pickDateOption = document.querySelector('div[data-time="pick"]') ||
-                        document.querySelector('div[role="menuitem"]');
+  console.log('✅ Schedule dialog appeared');
   
-  if (pickDateOption) {
-    pickDateOption.click();
-    await sleep(1000);
+  await sleep(500);
+  
+  // STEP 4: Click "Tarih ve saat seç" menuitem
+  console.log('Step 11: Looking for "Tarih ve saat seç" menuitem...');
+  
+  // Look for menuitem with class "Az AM" that contains "Tarih ve saat seç"
+  const pickDateTimeButton = Array.from(document.querySelectorAll('.Az[role="menuitem"]')).find(item => {
+    const text = item.textContent.toLowerCase();
+    return text.includes('tarih ve saat seç') || text.includes('pick date');
+  });
+  
+  if (!pickDateTimeButton) {
+    console.log('⚠️ Could not find "Tarih ve saat seç" menuitem');
+    throw new Error('Could not find "Tarih ve saat seç" button');
+  }
+  
+  console.log('✅ Found "Tarih ve saat seç", clicking...');
+  
+  // Scroll into view
+  pickDateTimeButton.scrollIntoView({ behavior: 'instant', block: 'center' });
+  await sleep(300);
+  
+  // Multiple click methods
+  try {
+    pickDateTimeButton.click();
+    await sleep(200);
+    
+    const rect = pickDateTimeButton.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    
+    const mouseEventOptions = {
+      view: window,
+      bubbles: true,
+      cancelable: true,
+      clientX: centerX,
+      clientY: centerY
+    };
+    
+    pickDateTimeButton.dispatchEvent(new MouseEvent('mouseenter', mouseEventOptions));
+    await sleep(100);
+    pickDateTimeButton.dispatchEvent(new MouseEvent('mousedown', mouseEventOptions));
+    await sleep(50);
+    pickDateTimeButton.dispatchEvent(new MouseEvent('mouseup', mouseEventOptions));
+    await sleep(50);
+    pickDateTimeButton.dispatchEvent(new MouseEvent('click', mouseEventOptions));
+  } catch (e) {
+    console.log('Click error:', e);
+  }
+  
+  await sleep(2500); // Wait longer for calendar to appear
 
-    // Now we need to set the date and time
-    // This part is tricky as Gmail's date/time picker is complex
-    // We'll try to find the date and time inputs
-    const dateInput = document.querySelector('input[type="date"]') ||
-                     document.querySelector('input[aria-label*="Date"]');
-    const timeInput = document.querySelector('input[type="time"]') ||
-                     document.querySelector('input[aria-label*="Time"]');
-
-    if (dateInput && timeInput) {
-      const scheduledDate = new Date(plannedDate);
-      
-      // Format date as YYYY-MM-DD
-      const dateStr = scheduledDate.toISOString().split('T')[0];
-      dateInput.value = dateStr;
-      dateInput.dispatchEvent(new Event('input', { bubbles: true }));
-      dateInput.dispatchEvent(new Event('change', { bubbles: true }));
-      
-      // Format time as HH:MM
-      const hours = String(scheduledDate.getHours()).padStart(2, '0');
-      const minutes = String(scheduledDate.getMinutes()).padStart(2, '0');
-      const timeStr = `${hours}:${minutes}`;
-      timeInput.value = timeStr;
-      timeInput.dispatchEvent(new Event('input', { bubbles: true }));
-      timeInput.dispatchEvent(new Event('change', { bubbles: true }));
-      
-      await sleep(500);
-
-      // Click schedule button
-      const scheduleButton = document.querySelector('button[name="schedule"]') ||
-                           Array.from(document.querySelectorAll('button')).find(btn => 
-                             btn.textContent.toLowerCase().includes('schedule') || 
-                             btn.textContent.toLowerCase().includes('planla')
-                           );
-      
-      if (scheduleButton) {
-        scheduleButton.click();
-        await sleep(1000);
-      }
+  // STEP 5: Set the date and time in the calendar/time picker
+  console.log('Step 12: Setting date and time...');
+  const scheduledDate = new Date(plannedDate);
+  console.log(`Target date/time: ${scheduledDate.toLocaleString()}`);
+  
+  // FIRST: Click the calendar day (the calendar is already showing)
+  const targetDay = scheduledDate.getDate();
+  const targetMonth = scheduledDate.toLocaleDateString('tr-TR', { month: 'short' }); // "Eki" for October
+  console.log(`Looking for day ${targetDay} in month ${targetMonth}...`);
+  
+  // Find the td[role="gridcell"] with aria-label containing the day and month
+  const dayCell = Array.from(document.querySelectorAll('td[role="gridcell"]')).find(cell => {
+    const ariaLabel = cell.getAttribute('aria-label');
+    if (!ariaLabel) return false;
+    
+    // Match "23 Eki" or similar patterns
+    const matches = ariaLabel.match(/^(\d+)\s+(\w+)/);
+    if (matches && matches[1] === String(targetDay)) {
+      console.log(`Found potential day cell: ${ariaLabel}`);
+      // Check if it's not disabled and not from a different month (J-JB-KA-Ku-Kk class)
+      const isOtherMonth = cell.classList.contains('J-JB-KA-Ku-Kk');
+      const isDisabled = cell.classList.contains('J-JB-KA-a1R-JB');
+      return !isOtherMonth;
     }
+    return false;
+  });
+  
+  if (dayCell) {
+    console.log(`✅ Found day ${targetDay}, clicking...`);
+    dayCell.click();
+    await sleep(800);
+  } else {
+    console.log(`⚠️ Could not find day ${targetDay}`);
+  }
+  
+  // SECOND: Set the time input
+  // Find the time input with aria-label="Zaman" (Time in Turkish)
+  const timeInput = document.querySelector('input[aria-label="Zaman"]') ||
+                   document.querySelector('input[aria-label="Time"]') ||
+                   Array.from(document.querySelectorAll('input[type="text"]')).find(input => {
+                     const label = input.getAttribute('aria-label');
+                     return label && (label.toLowerCase().includes('zaman') || label.toLowerCase().includes('time'));
+                   });
+  
+  if (timeInput) {
+    const hours = String(scheduledDate.getHours()).padStart(2, '0');
+    const minutes = String(scheduledDate.getMinutes()).padStart(2, '0');
+    const timeStr = `${hours}:${minutes}`;
+    
+    console.log(`Setting time to: ${timeStr}`);
+    timeInput.focus();
+    await sleep(200);
+    
+    // Clear and set value
+    timeInput.value = '';
+    timeInput.dispatchEvent(new Event('input', { bubbles: true }));
+    await sleep(100);
+    
+    timeInput.value = timeStr;
+    timeInput.dispatchEvent(new Event('input', { bubbles: true }));
+    timeInput.dispatchEvent(new Event('change', { bubbles: true }));
+    timeInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, bubbles: true }));
+    
+    await sleep(500);
+    console.log('✅ Time set');
+  } else {
+    console.log('⚠️ Could not find time input');
+  }
+  
+  await sleep(800);
+
+  // STEP 6: Click "Kaydet" (Save) or "Gönderme zamanını planla" confirmation button
+  console.log('Step 13: Looking for save/schedule button...');
+  const finalScheduleButton = Array.from(document.querySelectorAll('button, div[role="button"]')).find(btn => {
+    const text = btn.textContent.toLowerCase();
+    return text.includes('kaydet') ||
+           text.includes('save') ||
+           text.includes('gönderme zamanını planla') ||
+           text.includes('schedule send') ||
+           text.includes('zamanını planla');
+  });
+  
+  if (finalScheduleButton) {
+    console.log('✅ Found final button, clicking...');
+    
+    // Scroll and click properly
+    finalScheduleButton.scrollIntoView({ behavior: 'instant', block: 'center' });
+    await sleep(300);
+    
+    try {
+      finalScheduleButton.click();
+      await sleep(200);
+      
+      const rect = finalScheduleButton.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      
+      const mouseEventOptions = {
+        view: window,
+        bubbles: true,
+        cancelable: true,
+        clientX: centerX,
+        clientY: centerY
+      };
+      
+      finalScheduleButton.dispatchEvent(new MouseEvent('mousedown', mouseEventOptions));
+      await sleep(50);
+      finalScheduleButton.dispatchEvent(new MouseEvent('mouseup', mouseEventOptions));
+      await sleep(50);
+      finalScheduleButton.dispatchEvent(new MouseEvent('click', mouseEventOptions));
+    } catch (e) {
+      console.log('Click error:', e);
+    }
+    
+    await sleep(2000);
+  } else {
+    console.log('⚠️ Could not find final schedule button');
   }
 
   // Wait to ensure scheduling is complete
-  await sleep(1500);
+  console.log('Step 14: Waiting for schedule to complete...');
+  await sleep(2500);
   
-  // Close the compose window
+  // Close this compose window
+  console.log('Step 15: Closing compose window...');
   await closeAllComposeWindows();
-  await sleep(1000);
+  await sleep(500);
+  
+  console.log(`✅ Successfully scheduled email to ${toEmail}!\n`);
 }
 
 function waitForElement(selector, timeout = 3000) {
@@ -243,30 +480,27 @@ function sleep(ms) {
 }
 
 async function closeAllComposeWindows() {
-  // Find and close all open compose windows
-  const closeButtons = document.querySelectorAll('img.Ha[alt="Kapat"], img.Ha[alt="Close"], img.Ha[aria-label*="Kapat"], img.Ha[aria-label*="Close"]');
+  console.log('🧹 Closing compose windows...');
   
-  for (const button of closeButtons) {
+  // Simple approach: Just press ESC a few times
+  // This is safer than clicking close buttons
+  for (let i = 0; i < 3; i++) {
     try {
-      button.click();
+      document.dispatchEvent(new KeyboardEvent('keydown', { 
+        key: 'Escape', 
+        keyCode: 27, 
+        code: 'Escape',
+        bubbles: true,
+        cancelable: true
+      }));
       await sleep(300);
     } catch (e) {
-      console.log('Error closing compose window:', e);
+      console.log('⚠️ Error sending ESC:', e);
     }
   }
   
-  // Also try to close any modal dialogs
-  const dialogs = document.querySelectorAll('div[role="dialog"]');
-  for (const dialog of dialogs) {
-    const closeBtn = dialog.querySelector('img.Ha, button[aria-label*="Close"], button[aria-label*="Kapat"]');
-    if (closeBtn) {
-      try {
-        closeBtn.click();
-        await sleep(300);
-      } catch (e) {
-        console.log('Error closing dialog:', e);
-      }
-    }
-  }
+  await sleep(500);
+  console.log('✨ Finished closing compose windows');
 }
+
 

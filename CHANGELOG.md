@@ -1,5 +1,103 @@
 # Changelog
 
+## Version 1.2.0 (October 23, 2025)
+
+### ✨ Major Features
+
+**🛑 STOP Button**
+- **New**: Added a STOP button to halt email scheduling mid-process
+- Appears next to "Schedule Emails" button when scheduling starts
+- Stops after completing the current email (doesn't interrupt mid-email)
+- Shows status: "⏹ Stopped! Scheduled X of Y email(s)."
+- Preserves form data when stopped (only clears form if all emails complete)
+- Clean red design matching the extension's aesthetic
+
+### 🐛 Critical Bug Fixes
+
+**Fixed: Schedule Dropdown Not Clicking**
+- **Problem**: Dropdown arrow next to "Gönder" button wasn't visually opening
+- **Solution**: Implemented advanced mouse event simulation
+  - Scroll elements into view before clicking
+  - Dispatch proper mouseenter, mousedown, mouseup, and click events
+  - Calculate and use real element coordinates (clientX, clientY)
+  - Added proper timing between events
+- **Result**: Dropdowns now open reliably and visibly
+
+**Fixed: Date Selection in Calendar**
+- **Problem**: Calendar day (e.g., "23") wasn't being selected properly
+- **Solution**: 
+  - Now searches for `td[role="gridcell"]` with matching aria-label (e.g., "23 Eki")
+  - Filters out days from other months (J-JB-KA-Ku-Kk class)
+  - Proper Turkish month matching
+- **Result**: Correct day is now highlighted and selected
+
+**Fixed: Time Input Not Setting**
+- **Problem**: Time input showed "✅ Time set" but value didn't actually change
+- **Solution**:
+  - Find input using aria-label="Zaman" (Time in Turkish)
+  - Clear field first, then set new value
+  - Dispatch input, change, and Enter key events
+  - Supports both Turkish and English labels
+- **Result**: Time is now properly set to the planned time
+
+**Fixed: Final "Kaydet" Button Not Clicking**
+- **Problem**: Schedule dialog was confirming without actual click
+- **Solution**:
+  - Now searches for "Kaydet" (Save) button explicitly
+  - Same advanced mouse event simulation as dropdown
+  - Increased wait time to 2000ms after clicking
+- **Result**: Emails are properly scheduled and confirmed
+
+### 🔧 Technical Improvements
+
+**Enhanced Click Event Simulation**
+- All clickable elements now use proper mouse event sequences
+- Elements are scrolled into view before interaction
+- Real coordinates calculated for each click
+- Increased delays between steps for reliability
+- Better error logging for debugging
+
+**Improved Calendar & Time Picker Flow**
+- Date is selected FIRST, then time
+- Better selectors for Turkish Gmail interface
+- More robust aria-label matching
+- Filters disabled/grayed-out dates
+
+**Better Progress Tracking**
+- Stop functionality integrated with progress updates
+- Accurate completed count when stopped
+- Progress bar reflects actual completed emails
+
+### 📝 Code Changes
+
+**popup.html**
+- Added button group container for flexible layout
+- Added STOP button with red styling
+
+**popup.css**
+- New `.button-group` flexbox layout
+- New `.btn-stop` styles with red theme and hover effects
+- Maintains classy black-white aesthetic
+
+**popup.js**
+- Added stop button click handler
+- Sets/clears `shouldStop` flag in chrome.storage
+- Shows/hides stop button at appropriate times
+- Handles stopped vs completed states differently
+- Preserves form data when stopped
+
+**content.js**
+- `scheduleEmailsSequentially()`: Checks stop flag before each email
+- Returns `{ stopped, completed }` status object
+- Enhanced click simulation with `scrollIntoView()` and coordinate-based events
+- Better calendar date selection with aria-label matching
+- Time input now clears before setting value
+- "Kaydet" button detection added
+- Increased sleep durations throughout for stability
+- Better logging for debugging clicks and selections
+
+---
+
 ## Version 1.1.0 (October 23, 2025)
 
 ### 🐛 Bug Fixes
