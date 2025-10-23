@@ -1,5 +1,142 @@
 # Changelog
 
+## Version 1.4.1 (October 23, 2025)
+
+### 🐛 Bug Fixes
+
+**Fixed: "Gönderme zamanını planla" Click Issue**
+- **Problem**: Extension was getting stuck when clicking "Gönderme zamanını planla" (Schedule send)
+- **Solution**: 
+  - Added multiple fallback selectors (by attribute, by role, by text content)
+  - Improved click simulation with focus + mouseover events
+  - Added detailed logging for debugging
+  - Increased wait times for dropdown and schedule dialog
+- **Result**: More reliable clicking and dialog opening
+
+**Enhanced Click Reliability**:
+- Added `focus()` call before clicking
+- Added `mouseover` event in addition to mouseenter
+- Multiple click attempts for better success rate
+- Better element visibility checking
+- Logs element text and visibility state for debugging
+
+**Increased Timing for Reliability**:
+- `AFTER_COMPOSE_CLICK`: 300ms → 1200ms (Gmail needs time to load compose)
+- `COMPOSE_WINDOW_READY`: 200ms → 400ms (Ensure compose is fully ready)
+- `AFTER_DROPDOWN_CLICK`: 300ms → 800ms (Dropdown needs time to render)
+- `BEFORE_MENU_SEARCH`: 300ms → 500ms (Menu items need time to appear)
+- `BETWEEN_MOUSE_EVENTS`: 40ms → 50ms (Slightly more time between events)
+- `AFTER_SCHEDULE_OPTION`: 400ms → 2000ms (Critical: schedule dialog needs time)
+- `AFTER_DIALOG_READY`: 400ms → 500ms (Dialog elements need time to render)
+- `AFTER_DATETIME_CLICK`: 500ms → 1500ms (Calendar needs time to appear)
+- `AFTER_SAVE_CLICK`: 100ms → 1500ms (Schedule operation needs time)
+- `AFTER_SCHEDULE_COMPLETE`: 100ms → 1500ms (Ensure scheduling is done)
+
+### 🔧 Improvements
+
+**Better Error Messages**:
+- Logs all available menu items if "Gönderme zamanını planla" not found
+- Shows element text content for verification
+- Displays element visibility state
+- Coordinates logged for click events
+
+**More Resilient Selectors**:
+1. First tries: `div[selector="scheduledSend"]`
+2. Fallback: Search by text in `div[role="menuitem"]`
+3. Last resort: `.J-N[selector="scheduledSend"]`
+
+This ensures it works even if Gmail changes its structure slightly.
+
+---
+
+## Version 1.4.0 (October 23, 2025)
+
+### ✨ Major Features
+
+**🔔 Background Service Worker & Notifications**
+- **New**: Background service worker for persistent state management
+- Work in other tabs while emails are being scheduled
+- Extension continues working even if popup is closed
+- Real-time progress tracking across all browser windows
+
+**📊 Badge Counter on Extension Icon**
+- Shows live progress (e.g., "3/10") on the extension icon
+- Updates in real-time as emails are scheduled
+- Automatically clears when complete
+- Green color for active scheduling
+- Visible across all Chrome windows
+
+**🔔 Desktop Notifications**
+- **Completion Notification**: "✅ Successfully scheduled X emails!"
+- **Stop Notification**: "⏹ Scheduled X of Y emails"
+- **Interruption Warning**: Alerts if Gmail tab is closed during scheduling
+- Auto-dismisses after 5 seconds
+- Non-intrusive, priority-based notifications
+
+**🛡️ Tab Close Protection**
+- Monitors if Gmail tab is closed during scheduling
+- Shows warning notification if tab is closed unexpectedly
+- Prevents silent failures
+- Better error handling for interrupted sessions
+
+### 🔧 Technical Implementation
+
+**background.js** (New File)
+- Service worker for background state management
+- Tracks scheduling state globally
+- Badge counter management with `chrome.action.setBadgeText()`
+- Notification system with `chrome.notifications.create()`
+- Tab monitoring with `chrome.tabs.onRemoved`
+- Message handling from popup and content script
+
+**manifest.json**
+- Added `notifications` permission
+- Added `background.service_worker` configuration
+- Enables persistent background operation
+
+**popup.js**
+- Sends `schedulingStarted` message to background worker
+- Sends `schedulingComplete` message on success
+- Sends `schedulingStopped` message when stopped
+- Better integration with background state
+
+**Message Flow**:
+1. Popup → Background: "schedulingStarted" (with total count)
+2. Content Script → Background: "updateProgress" (ongoing)
+3. Popup → Background: "schedulingComplete" or "schedulingStopped"
+4. Background → Updates badge & shows notification
+
+### 📝 Benefits
+
+**Multi-tasking Support**:
+- ✅ Switch to other tabs while scheduling
+- ✅ Close popup while scheduling continues
+- ✅ Work in other Chrome windows
+- ✅ Extension runs in background
+
+**Better User Experience**:
+- ✅ Visual progress on extension icon
+- ✅ Desktop notifications for completion
+- ✅ No need to keep popup open
+- ✅ Protection against accidental tab closure
+- ✅ Clear feedback at all stages
+
+**Reliability**:
+- ✅ Persistent state management
+- ✅ Interruption detection
+- ✅ Better error handling
+- ✅ No silent failures
+
+### ⚠️ Important Notes
+
+- **Gmail tab must stay open**: Don't close or navigate away from Gmail
+- **Switch tabs freely**: You can work in other tabs while scheduling
+- **Popup can close**: No need to keep the popup open
+- **Watch the badge**: Extension icon shows live progress
+- **Listen for notification**: Desktop alert when complete
+
+---
+
 ## Version 1.3.0 (October 23, 2025)
 
 ### ✨ Major Features

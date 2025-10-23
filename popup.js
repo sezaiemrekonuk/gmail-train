@@ -116,6 +116,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Clear any previous stop flag
     await chrome.storage.local.set({ shouldStop: false });
     
+    // Notify background worker that scheduling started
+    chrome.runtime.sendMessage({
+      action: 'schedulingStarted',
+      total: emails.length,
+      tabId: tab.id
+    });
+    
     showStatus('Starting email scheduling...', 'info');
     showProgress(0, emails.length);
 
@@ -144,8 +151,21 @@ document.addEventListener('DOMContentLoaded', function() {
         const completedCount = response.completed || emails.length;
         
         if (wasStopped) {
+          // Notify background worker that scheduling was stopped
+          chrome.runtime.sendMessage({
+            action: 'schedulingStopped',
+            completed: completedCount,
+            total: emails.length
+          });
+          
           showStatus(`⏹ Stopped! Scheduled ${completedCount} of ${emails.length} email(s).`, 'info');
         } else {
+          // Notify background worker that scheduling completed
+          chrome.runtime.sendMessage({
+            action: 'schedulingComplete',
+            count: emails.length
+          });
+          
           showStatus(`✅ Successfully scheduled ${emails.length} email(s)!`, 'success');
         }
         

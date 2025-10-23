@@ -6,8 +6,8 @@ console.log('Gmail Scheduler Extension Loaded');
 const TIMING = {
   // Compose window management
   AFTER_CLOSE_WINDOWS: 800,        // Wait after closing old compose windows
-  AFTER_COMPOSE_CLICK: 300,       // Wait after clicking compose button
-  COMPOSE_WINDOW_READY: 200,       // Wait for compose window to be ready
+  AFTER_COMPOSE_CLICK: 1200,       // Wait after clicking compose button
+  COMPOSE_WINDOW_READY: 400,       // Wait for compose window to be ready
   
   // Form field filling
   AFTER_RECIPIENT_FILL: 300,       // Wait after filling recipient
@@ -19,14 +19,14 @@ const TIMING = {
   // Schedule dropdown interactions
   SCROLL_INTO_VIEW: 200,           // Wait after scrolling element into view
   AFTER_DIRECT_CLICK: 150,         // Wait after direct click
-  BETWEEN_MOUSE_EVENTS: 40,        // Wait between mouseenter/mousedown/mouseup
-  AFTER_DROPDOWN_CLICK: 300,      // Wait for dropdown to appear
-  BEFORE_MENU_SEARCH: 300,         // Wait before searching for menu items
+  BETWEEN_MOUSE_EVENTS: 50,        // Wait between mouseenter/mousedown/mouseup
+  AFTER_DROPDOWN_CLICK: 800,       // Wait for dropdown to appear
+  BEFORE_MENU_SEARCH: 500,         // Wait before searching for menu items
   
   // Schedule dialog
-  AFTER_SCHEDULE_OPTION: 400,     // Wait for schedule dialog to appear
-  AFTER_DIALOG_READY: 400,         // Wait after dialog is found
-  AFTER_DATETIME_CLICK: 500,      // Wait for calendar to appear
+  AFTER_SCHEDULE_OPTION: 2000,     // Wait for schedule dialog to appear
+  AFTER_DIALOG_READY: 500,         // Wait after dialog is found
+  AFTER_DATETIME_CLICK: 1500,      // Wait for calendar to appear
   
   // Date/time picker
   AFTER_DAY_CLICK: 600,            // Wait after clicking calendar day
@@ -37,8 +37,8 @@ const TIMING = {
   
   // Final confirmation
   AFTER_SAVE_SCROLL: 200,          // Wait after scrolling to save button
-  AFTER_SAVE_CLICK: 100,          // Wait for schedule to complete
-  AFTER_SCHEDULE_COMPLETE: 100,   // Wait after scheduling is done
+  AFTER_SAVE_CLICK: 1500,          // Wait for schedule to complete
+  AFTER_SCHEDULE_COMPLETE: 1500,   // Wait after scheduling is done
   AFTER_FINAL_CLOSE: 400,          // Wait after closing compose window
   
   // Element waiting
@@ -254,28 +254,54 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
   console.log('Step 9: Looking for "Gönderme zamanını planla" option...');
   await sleep(TIMING.BEFORE_MENU_SEARCH);
   
-  // The element with selector="scheduledSend"
-  const scheduleSendOption = document.querySelector('div[selector="scheduledSend"]') ||
-                             document.querySelector('.J-N[selector="scheduledSend"]');
+  // Try multiple selectors for the schedule send option
+  let scheduleSendOption = document.querySelector('div[selector="scheduledSend"]');
   
   if (!scheduleSendOption) {
+    // Try finding by text content
+    scheduleSendOption = Array.from(document.querySelectorAll('div[role="menuitem"]')).find(item => {
+      const text = item.textContent.toLowerCase();
+      return text.includes('gönderme zamanını planla') || 
+             text.includes('schedule send') ||
+             text.includes('zamanını planla');
+    });
+  }
+  
+  if (!scheduleSendOption) {
+    // Try the J-N class selector
+    scheduleSendOption = document.querySelector('.J-N[selector="scheduledSend"]');
+  }
+  
+  if (!scheduleSendOption) {
+    console.log('⚠️ Available menu items:', 
+      Array.from(document.querySelectorAll('div[role="menuitem"]')).map(el => el.textContent));
     throw new Error('Could not find "Gönderme zamanını planla" option');
   }
   
-  console.log('✅ Found "Gönderme zamanını planla", clicking...');
+  console.log('✅ Found "Gönderme zamanını planla", clicking...', scheduleSendOption);
+  console.log('Element visible:', scheduleSendOption.offsetParent !== null);
+  console.log('Element text:', scheduleSendOption.textContent);
   
   // Scroll into view
   scheduleSendOption.scrollIntoView({ behavior: 'instant', block: 'center' });
   await sleep(TIMING.SCROLL_INTO_VIEW);
   
-  // Multiple click methods
+  // Focus the element first
+  scheduleSendOption.focus();
+  await sleep(100);
+  
+  // Multiple click methods with more aggressive approach
   try {
+    // Method 1: Direct click
     scheduleSendOption.click();
     await sleep(TIMING.AFTER_DIRECT_CLICK);
     
+    // Method 2: Mouse events with coordinates
     const rect = scheduleSendOption.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
+    
+    console.log('Clicking at coordinates:', centerX, centerY);
     
     const mouseEventOptions = {
       view: window,
@@ -287,11 +313,18 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
     
     scheduleSendOption.dispatchEvent(new MouseEvent('mouseenter', mouseEventOptions));
     await sleep(TIMING.BETWEEN_MOUSE_EVENTS);
+    scheduleSendOption.dispatchEvent(new MouseEvent('mouseover', mouseEventOptions));
+    await sleep(TIMING.BETWEEN_MOUSE_EVENTS);
     scheduleSendOption.dispatchEvent(new MouseEvent('mousedown', mouseEventOptions));
     await sleep(TIMING.BETWEEN_MOUSE_EVENTS);
     scheduleSendOption.dispatchEvent(new MouseEvent('mouseup', mouseEventOptions));
     await sleep(TIMING.BETWEEN_MOUSE_EVENTS);
     scheduleSendOption.dispatchEvent(new MouseEvent('click', mouseEventOptions));
+    await sleep(TIMING.BETWEEN_MOUSE_EVENTS);
+    
+    // Method 3: Try clicking again after a delay
+    scheduleSendOption.click();
+    
   } catch (e) {
     console.log('Click error:', e);
   }
