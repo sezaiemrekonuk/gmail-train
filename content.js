@@ -84,7 +84,8 @@ async function scheduleEmailsSequentially(data) {
     chrome.runtime.sendMessage({
       action: 'updateProgress',
       current: i,
-      total: emails.length
+      total: emails.length,
+      currentEmail: email
     });
 
     try {
@@ -107,7 +108,8 @@ async function scheduleEmailsSequentially(data) {
   chrome.runtime.sendMessage({
     action: 'updateProgress',
     current: completedCount,
-    total: emails.length
+    total: emails.length,
+    currentEmail: null
   });
   
   return { stopped, completed: completedCount };

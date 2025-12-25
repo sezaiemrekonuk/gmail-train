@@ -122,6 +122,9 @@
         <button type="submit" id="scheduleBtn" class="btn-primary">
           Schedule Emails
         </button>
+        <button type="button" id="clearFormBtn" class="btn-secondary">
+          Clear
+        </button>
         <button type="button" id="stopBtn" class="btn-stop hidden">
           ⏹ Stop
         </button>
@@ -133,7 +136,11 @@
       <div class="progress-bar">
         <div id="progressBar" class="progress-fill"></div>
       </div>
-      <p id="progressText">Scheduling: 0/0</p>
+      <div class="progress-details">
+        <p id="progressText">Scheduling: 0/0</p>
+        <p id="currentEmail" class="current-email hidden"></p>
+        <p id="eta" class="eta hidden"></p>
+      </div>
     </div>
   </div>
 

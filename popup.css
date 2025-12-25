@@ -265,6 +265,84 @@ small {
   font-weight: 400;
 }
 
+/* Email validation feedback */
+.input-feedback {
+  margin-top: 6px;
+  min-height: 16px;
+}
+
+#emailCounter {
+  font-size: 11px;
+  transition: color 0.2s ease;
+}
+
+#emailCounter.valid {
+  color: #4ade80;
+}
+
+#emailCounter.has-errors {
+  color: #f87171;
+}
+
+#emailCounter.neutral {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Quick schedule presets */
+.quick-presets {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.preset-btn {
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.preset-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.preset-btn:active,
+.preset-btn.active {
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(0.97);
+}
+
+/* Secondary button */
+.btn-secondary {
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
 .btn-primary {
   width: 100%;
   padding: 14px 24px;
@@ -409,11 +487,32 @@ small {
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
 }
 
+.progress-details {
+  text-align: center;
+}
+
 #progressText {
   font-size: 12px;
   color: rgba(255, 255, 255, 0.6);
   text-align: center;
   font-weight: 500;
   letter-spacing: 0.3px;
+  margin: 0;
+}
+
+.current-email {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.eta {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+  margin-top: 4px;
 }
 

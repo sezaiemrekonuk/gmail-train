@@ -1,5 +1,53 @@
 # Changelog
 
+## Version 1.5.0 (December 25, 2025)
+
+### ✨ New Features
+
+**Real-time Email Validation**
+- Live validation as you type with visual feedback
+- Shows count of valid/invalid emails
+- Color-coded feedback: green for valid, red for invalid
+- Supports comma, semicolon, and newline separators
+
+**Enhanced Progress Display**
+- Shows current email being scheduled
+- Real-time ETA (Estimated Time of Arrival) calculation
+- Dynamic updates based on actual scheduling speed
+
+**Form Data Persistence**
+- Auto-saves form data as you type
+- Restores form on popup reopen (within 24 hours)
+- Never lose your work if popup closes accidentally
+- Clear button to reset form and saved data
+
+**Timezone Display**
+- Explicitly shows user's timezone (e.g., "Europe/Istanbul (UTC+03:00)")
+- Reduces confusion about scheduling times
+- Updates automatically based on browser settings
+
+**Quick Schedule Presets**
+- One-click presets: "+1h", "+3h", "Tomorrow 9AM", "Monday 9AM"
+- Instantly fills the date/time picker
+- Visual feedback on button press
+
+### 🎨 UI Improvements
+
+- Added email counter below the email input
+- Added preset buttons above date picker
+- Enhanced progress section with current email and ETA
+- Added "Clear" button to reset form
+- New secondary button styling
+
+### 🔧 Technical Improvements
+
+- Centralized storage keys for consistency
+- Debounced auto-save to reduce storage writes
+- MutationObserver for WYSIWYG editor changes
+- Better modular code organization
+
+---
+
 ## Version 1.4.3 (December 25, 2025)
 
 ### 🐛 Bug Fixes
