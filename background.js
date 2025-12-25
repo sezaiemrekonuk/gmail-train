@@ -115,13 +115,6 @@ function showStoppedNotification(completed, total) {
   });
 }
 
-// Clear badge when extension icon is clicked
-chrome.action.onClicked.addListener(() => {
-  if (!schedulingState.isScheduling) {
-    updateBadge(0, 0);
-  }
-});
-
 // Monitor if Gmail tab is closed during scheduling
 chrome.tabs.onRemoved.addListener((tabId) => {
   if (schedulingState.isScheduling && tabId === schedulingState.gmailTabId) {

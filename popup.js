@@ -86,8 +86,17 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
 
-    // Validate message content
-    if (!messageHTML || messageHTML === '<br>' || messageHTML === '') {
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const invalidEmails = emails.filter(e => !emailRegex.test(e));
+    if (invalidEmails.length > 0) {
+      showStatus(`Invalid email(s): ${invalidEmails.slice(0, 3).join(', ')}${invalidEmails.length > 3 ? '...' : ''}`, 'error');
+      return;
+    }
+
+    // Validate message content - strip HTML tags and check for actual text
+    const textContent = messageHTML.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+    if (!textContent) {
       showStatus('Please enter a message', 'error');
       messageEditor.focus();
       return;
@@ -175,8 +184,8 @@ document.addEventListener('DOMContentLoaded', function() {
           messageEditor.innerHTML = ''; // Clear WYSIWYG editor
         }
         
-        // Clear any stored data
-        chrome.storage.local.clear();
+        // Clear scheduling flag only (preserve other data)
+        chrome.storage.local.remove(['shouldStop']);
         
         // Hide progress after a delay
         setTimeout(() => {

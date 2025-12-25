@@ -1,5 +1,50 @@
 # Changelog
 
+## Version 1.4.3 (December 25, 2025)
+
+### 🐛 Bug Fixes
+
+**Dead Code Removal**
+- Removed `chrome.action.onClicked` listener that never fired (popup takes precedence over click events)
+- Cleaner codebase with no unused code
+
+**Email Validation**
+- **New**: Added proper email format validation before scheduling
+- Invalid emails now show error: "Invalid email(s): [list]"
+- Prevents failed scheduling attempts due to typos
+
+**Storage Management**
+- Fixed aggressive `chrome.storage.local.clear()` that wiped all extension data
+- Now only removes the `shouldStop` flag, preserving other data
+
+**Empty Editor Detection**
+- Improved detection of empty messages
+- Now properly detects: `<div><br></div>`, `<p></p>`, `&nbsp;`, multiple `<br>` tags
+- Strips HTML tags and entities before checking for actual content
+
+**Time Format Locale**
+- **New**: Auto-detects 12-hour vs 24-hour format based on Gmail's UI
+- Works correctly for US users (AM/PM) and international users (24-hour)
+- Detects format by checking for "AM" or "PM" in Gmail's interface
+
+**Day Selector Fix**
+- Fixed regex that could incorrectly match year or other numbers in calendar labels
+- Now uses word boundary matching (`\b`) for accurate day detection
+- More reliable date selection across different locales
+
+**Schedule Button Selector**
+- Made selector more specific to avoid clicking "Save Draft" buttons
+- Now scopes search to the active dialog only
+- Excludes buttons containing "draft" or "taslak" text
+
+**CC Button Detection**
+- Added multiple fallback selectors for CC button
+- Supports: class selector, `data-tooltip`, `aria-label`, and text content matching
+- Works across different Gmail versions and languages (including "Bilgi" in Turkish)
+- Graceful fallback if CC button not found
+
+---
+
 ## Version 1.4.2 (October 23, 2025)
 
 ### 🌍 Language Support

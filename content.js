@@ -156,12 +156,24 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
   // Fill CC if provided (supports both Turkish and English)
   if (cc) {
     console.log(`Step 5: Filling CC: ${cc}...`);
-    const ccButton = composeWindow.querySelector('span.aB.gQ.pE');
-    if (ccButton && (ccButton.textContent.includes('Cc') || ccButton.textContent.includes('CC'))) {
+    // Try multiple selectors for CC button to handle different Gmail versions/languages
+    const ccButton = composeWindow.querySelector('span.aB.gQ.pE') ||
+                     composeWindow.querySelector('[data-tooltip*="Cc"]') ||
+                     composeWindow.querySelector('[aria-label*="Cc"]') ||
+                     Array.from(composeWindow.querySelectorAll('span')).find(s => 
+                       s.textContent.trim().toLowerCase() === 'cc' || 
+                       s.textContent.trim().toLowerCase() === 'bilgi'
+                     );
+    
+    if (ccButton) {
       ccButton.click();
       await sleep(TIMING.AFTER_CC_BUTTON);
       
-      const ccInput = composeWindow.querySelector('div[name="cc"] input[peoplekit-id="BbVjBd"]');
+      // Try multiple selectors for CC input field
+      const ccInput = composeWindow.querySelector('div[name="cc"] input[peoplekit-id="BbVjBd"]') ||
+                      composeWindow.querySelector('input[aria-label*="Cc"]') ||
+                      composeWindow.querySelector('input[name="cc"]');
+      
       if (ccInput) {
         ccInput.focus();
         ccInput.value = cc;
@@ -170,6 +182,8 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
         await sleep(TIMING.AFTER_CC_FILL);
         console.log('✅ CC filled');
       }
+    } else {
+      console.log('⚠️ CC button not found, skipping CC');
     }
   }
 
@@ -413,16 +427,19 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
     const ariaLabel = cell.getAttribute('aria-label');
     if (!ariaLabel) return false;
     
-    // Match day number at the beginning (works for "23 Oct" or "23 Eki" or "October 23" etc.)
-    const matches = ariaLabel.match(/^(\d+)\s+/) || ariaLabel.match(/\s+(\d+)/);
-    if (matches && matches[1] === String(targetDay)) {
-      console.log(`Found potential day cell: ${ariaLabel}`);
-      // Check if it's not disabled and not from a different month (J-JB-KA-Ku-Kk class)
-      const isOtherMonth = cell.classList.contains('J-JB-KA-Ku-Kk');
-      const isDisabled = cell.classList.contains('J-JB-KA-a1R-JB');
-      return !isOtherMonth && !isDisabled;
-    }
-    return false;
+    // Extract day number using word boundary to avoid matching year or other numbers
+    // Matches: "23 Oct", "23 Eki", "October 23", "23", etc.
+    const dayMatch = ariaLabel.match(/\b(\d{1,2})\b/);
+    if (!dayMatch) return false;
+    
+    const cellDay = parseInt(dayMatch[1], 10);
+    if (cellDay !== targetDay) return false;
+    
+    console.log(`Found potential day cell: ${ariaLabel}`);
+    // Check if it's not disabled and not from a different month
+    const isOtherMonth = cell.classList.contains('J-JB-KA-Ku-Kk');
+    const isDisabled = cell.classList.contains('J-JB-KA-a1R-JB');
+    return !isOtherMonth && !isDisabled;
   });
   
   if (dayCell) {
@@ -443,11 +460,23 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
                    });
   
   if (timeInput) {
-    const hours = String(scheduledDate.getHours()).padStart(2, '0');
+    const hours24 = scheduledDate.getHours();
     const minutes = String(scheduledDate.getMinutes()).padStart(2, '0');
-    const timeStr = `${hours}:${minutes}`;
     
-    console.log(`Setting time to: ${timeStr}`);
+    // Detect if Gmail is using 12-hour format (AM/PM)
+    const uses12Hour = document.body.innerText.includes(' AM') || 
+                       document.body.innerText.includes(' PM');
+    
+    let timeStr;
+    if (uses12Hour) {
+      const hour12 = hours24 % 12 || 12;
+      const ampm = hours24 >= 12 ? 'PM' : 'AM';
+      timeStr = `${hour12}:${minutes} ${ampm}`;
+    } else {
+      timeStr = `${String(hours24).padStart(2, '0')}:${minutes}`;
+    }
+    
+    console.log(`Setting time to: ${timeStr} (12-hour format: ${uses12Hour})`);
     timeInput.focus();
     await sleep(TIMING.BEFORE_TIME_INPUT);
     
@@ -471,14 +500,17 @@ async function scheduleEmail(toEmail, cc, subject, message, plannedDate) {
 
   // STEP 6: Click Save/Schedule button (supports both Turkish and English)
   console.log('Step 13: Looking for save/schedule button...');
-  const finalScheduleButton = Array.from(document.querySelectorAll('button, div[role="button"]')).find(btn => {
-    const text = btn.textContent.toLowerCase();
-    return text.includes('schedule send') ||
-           text.includes('save') ||
-           text.includes('kaydet') ||
-           text.includes('gönderme zamanını planla') ||
-           text.includes('zamanını planla');
-  });
+  // Look for the dialog's primary action button specifically to avoid clicking wrong buttons
+  const activeDialog = document.querySelector('div[role="dialog"]:not([aria-hidden="true"])');
+  const finalScheduleButton = activeDialog ? 
+    Array.from(activeDialog.querySelectorAll('button, div[role="button"]')).find(btn => {
+      const text = btn.textContent.toLowerCase();
+      // Exclude "save draft" type buttons
+      if (text.includes('draft') || text.includes('taslak')) return false;
+      return text.includes('schedule send') ||
+             text.includes('gönderme zamanını planla') ||
+             text.includes('zamanını planla');
+    }) : null;
   
   if (finalScheduleButton) {
     console.log('✅ Found final button, clicking...');
