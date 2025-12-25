@@ -1,5 +1,37 @@
 # Changelog
 
+## Version 1.5.1 (December 25, 2025)
+
+### 🎨 Design Overhaul - Gmail Theme
+
+**New Logo & Branding**
+- New custom logo combining Gmail envelope + train + clock
+- Logo displayed in popup header
+- Updated extension icon (iconbase.png)
+
+**Gmail Color Scheme**
+- Complete redesign using official Gmail/Google colors
+- Primary red: #EA4335 (Gmail red)
+- Primary blue: #4285F4 (Google blue)
+- Clean white background with subtle shadows
+- Consistent with Gmail's Material Design aesthetic
+
+**UI Updates**
+- Light theme matching Gmail's interface
+- Rounded pill-style preset buttons
+- Blue accent for interactive elements
+- Red accent for stop/error states
+- Green accent for success states
+- Professional Google Sans-style typography
+- Softer shadows and borders
+
+**Color Variables**
+- CSS custom properties for easy theming
+- Consistent color application throughout
+- Proper contrast for accessibility
+
+---
+
 ## Version 1.5.0 (December 25, 2025)
 
 ### ✨ New Features

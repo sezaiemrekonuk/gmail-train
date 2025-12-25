@@ -86,7 +86,7 @@ function updateBadge(current, total) {
 function showCompletionNotification(count) {
   chrome.notifications.create({
     type: 'basic',
-    iconUrl: 'images/icon-128.png',
+    iconUrl: 'images/iconbase.png',
     title: '✅ Gmail Train - Complete!',
     message: `Successfully scheduled ${count} email${count > 1 ? 's' : ''}!`,
     priority: 2,
@@ -102,7 +102,7 @@ function showCompletionNotification(count) {
 function showStoppedNotification(completed, total) {
   chrome.notifications.create({
     type: 'basic',
-    iconUrl: 'images/icon-128.png',
+    iconUrl: 'images/iconbase.png',
     title: '⏹ Gmail Train - Stopped',
     message: `Scheduled ${completed} of ${total} email${total > 1 ? 's' : ''}.`,
     priority: 1,
@@ -124,7 +124,7 @@ chrome.tabs.onRemoved.addListener((tabId) => {
     
     chrome.notifications.create({
       type: 'basic',
-      iconUrl: 'images/icon-128.png',
+      iconUrl: 'images/iconbase.png',
       title: '⚠️ Gmail Train - Interrupted',
       message: 'Gmail tab was closed. Scheduling stopped.',
       priority: 2

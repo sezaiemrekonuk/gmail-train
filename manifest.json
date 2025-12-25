@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Gmail Train - Multi-Email Scheduler",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "Schedule and send emails separately and sequentially in Gmail with English & Turkish support",
   "permissions": [
     "activeTab",
@@ -18,8 +18,8 @@
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
-      "48": "images/icon-48.png",
-      "128": "images/icon-128.png"
+      "48": "images/iconbase.png",
+      "128": "images/iconbase.png"
     }
   },
   "content_scripts": [
@@ -30,10 +30,8 @@
     }
   ],
   "icons": {
-    "16": "images/icon-16.png",
-    "32": "images/icon-32.png",
-    "48": "images/icon-48.png",
-    "128": "images/icon-128.png"
+    "48": "images/iconbase.png",
+    "128": "images/iconbase.png"
   }
 }
 
