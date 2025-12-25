@@ -24,6 +24,9 @@
           placeholder="email1@example.com,email2@example.com" 
           required
         ></textarea>
+        <div class="input-feedback">
+          <span id="emailCounter"></span>
+        </div>
       </div>
 
       <div class="form-group">
@@ -87,13 +90,19 @@
 
       <div class="form-group">
         <label for="plannedDate">Planned Date & Time:</label>
+        <div class="quick-presets">
+          <button type="button" class="preset-btn" data-preset="hour1">+1h</button>
+          <button type="button" class="preset-btn" data-preset="hour3">+3h</button>
+          <button type="button" class="preset-btn" data-preset="tomorrow9">Tomorrow 9AM</button>
+          <button type="button" class="preset-btn" data-preset="monday9">Monday 9AM</button>
+        </div>
         <input 
           type="datetime-local" 
           id="plannedDate" 
           name="plannedDate" 
           required
         >
-        <small>Format: DD.MM.YYYY, HH:MM (in local time)</small>
+        <small>Timezone: <span id="timezoneDisplay">Loading...</span></small>
       </div>
 
       <div class="form-group">
